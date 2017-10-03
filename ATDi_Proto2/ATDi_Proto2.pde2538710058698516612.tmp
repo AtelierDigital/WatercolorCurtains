@@ -1,0 +1,116 @@
+import themidibus.*;
+
+
+MidiBus myBus; // The MidiBus
+
+
+float a = 0;
+PImage myImage, myImage2, myImage3;
+PGraphics pg;
+
+float x,y;
+
+int nrects = 200;
+float nRectsPercentage =1.0f;
+float rectWidthFactor = 0.5;
+float userFactor = 1;
+float userRange = 100;
+
+PImage mask;
+
+void setup() 
+{
+  //  MIDI stuff
+  myBus = new MidiBus(this, "Arturia MINILAB", -1);
+  
+  
+  size(1920, 1080);
+  pg = createGraphics(width, height);
+  
+  myImage = loadImage("IMG_3237.jpg").get(100,100, 1500,1080);
+  myImage.resize(width,height);
+  
+  myImage2 = loadImage("forest.jpg").get(100,100, 1500,1080);
+  myImage2.resize(width,height);
+  
+  myImage3 = loadImage("IMG_3237.jpg");
+  myImage3.resize(width,height);
+  
+  mask = new PImage();  
+}
+
+void draw() 
+{
+  image(myImage2);
+  
+  pg.beginDraw();
+  
+  mask = myImage3.get(mouseX,0, (int)userRange,height);
+  pg.image(mask, mouseX,0);
+  
+  UpdateRects();
+  
+  pg.endDraw();
+  
+  image(pg,0,0);
+   
+}
+
+public void UpdateRects()
+{  
+  color mycolor;
+  
+  /*int nregions = 3;
+  for(int r=0; r<nregions; r++)
+  {
+     
+  }*/
+  
+  for(int i =0; i< nrects; i++)
+  {
+    x = random(0, myImage.width);
+    y = random(0, myImage.height);
+    pg.noStroke();
+    
+    float randomColor = random(-1,1);
+    
+    mycolor = myImage.get((int)x, (int)y);
+    
+    if(randomColor < 0)
+    {
+      mycolor = myImage2.get((int)x+(int)random(-1.1,1.1), (int)y);
+    }
+     
+    if(CanDrawRect()){
+      pg.fill(mycolor,60);
+      pg.rect(x,y, rectWidthFactor*random(20,5),random(200,20));
+    }     
+  }
+}
+
+public boolean CanDrawRect(){
+  return !(abs(x - mouseX) < userRange);
+}
+
+//  MIDI stuff
+void controllerChange(int channel, int number, int value) {
+  // Receive a controllerChange
+  switch(number)
+  {
+    case 7:
+      userRange = map(value, 0, 127, 0, width / 2);
+      println("userFactor = " + userFactor);
+    break;
+    case 74:
+      rectWidthFactor = map(value, 0, 127, 0, 1);
+      println("rectWidthFactor = " + rectWidthFactor);
+    break;
+  }
+  println("Controller Change (channel, number, value):" + channel + " " + number + " " + value);
+  /*println();
+  println("Controller Change:");
+  println("--------");
+  println("Channel:"+channel);
+  println("Number:"+number);
+  println("Value:"+value);*/
+}

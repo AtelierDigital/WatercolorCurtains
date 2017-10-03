@@ -1,4 +1,5 @@
-import themidibus.*; //Import the library
+import themidibus.*;
+
 
 MidiBus myBus; // The MidiBus
 
@@ -9,7 +10,7 @@ PGraphics pg;
 
 float x,y;
 
-int nrects = 200;
+int nrects = 150;
 float nRectsPercentage =1.0f;
 float rectWidthFactor = 0.5;
 float userFactor = 1;
@@ -22,28 +23,31 @@ void setup()
   //  MIDI stuff
   myBus = new MidiBus(this, "Arturia MINILAB", -1);
   
-  
   size(1920, 1080);
   pg = createGraphics(width, height);
   
-  myImage = loadImage("seed3.jpg").get(100,100, 1500,1080);
+  myImage = loadImage("IMG_3237.jpg").get(0,0, 1500,1080);
   myImage.resize(width,height);
   
-  myImage2 = loadImage("forest.jpg").get(100,100, 1500,1080);
+  myImage2 = loadImage("forest.jpg").get(0,0, 1500,1080);
   myImage2.resize(width,height);
   
-  myImage3 = loadImage("seed3.jpg");
-  myImage3.resize(width,height);
+  myImage3 = loadImage("The_Shadow_Figure.jpg");
+  
+  
+  image(myImage,0,0);
   
   mask = new PImage();  
 }
 
 void draw() 
 {
+  
   pg.beginDraw();
   
-  mask = myImage3.get(mouseX,0, (int)userRange,height);
-  pg.image(mask, mouseX,0);
+  //mask = myImage3.get(mouseX,0, (int)userRange,height);
+  
+ // pg.image(mask, mouseX,0);
   
   UpdateRects();
   
@@ -63,25 +67,32 @@ public void UpdateRects()
      
   }*/
   
+  PImage picImage = myImage;
+  
+  /*if(!CanDrawRect()){
+    picImage = myImage3;
+  }*/
+  
   for(int i =0; i< nrects; i++)
   {
-    x = random(0, myImage.width);
-    y = random(0, myImage.height);
+    x = random(0, picImage.width);
+    y = random(0, picImage.height);
     pg.noStroke();
     
     float randomColor = random(-1,1);
     
-    mycolor = myImage.get((int)x, (int)y);
+    mycolor = picImage.get((int)x, (int)y);
     
     if(randomColor < 0)
     {
       mycolor = myImage2.get((int)x+(int)random(-1.1,1.1), (int)y);
     }
      
-    if(CanDrawRect()){
-      pg.fill(mycolor,10);
-      pg.rect(x,y, rectWidthFactor*random(20,5),random(200,20));
-    }     
+     
+    /*if(!CanDrawRect()){*///
+      pg.fill(mycolor,random(20,90));
+      pg.rect(x,y, rectWidthFactor*random(15,5),random(60,20));
+    //}     
   }
 }
 
