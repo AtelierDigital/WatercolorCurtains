@@ -1,11 +1,9 @@
 import themidibus.*;
 
-
 MidiBus myBus; // The MidiBus
 
-
 float a = 0;
-PImage myImage, myImage2, myImage3;
+PImage myImage, myImage2, myImage3, myImage4;
 PGraphics pg;
 
 float x,y;
@@ -14,7 +12,7 @@ int nrects = 150;
 float nRectsPercentage =1.0f;
 float rectWidthFactor = 0.5;
 float userFactor = 1;
-float userRange = 100;
+float userRange = 50;
 
 PImage mask;
 
@@ -32,22 +30,16 @@ void setup()
   myImage2 = loadImage("forest.jpg").get(0,0, 1500,1080);
   myImage2.resize(width,height);
   
-  myImage3 = loadImage("The_Shadow_Figure.jpg");
+  myImage3 = loadImage("fire_texture1421.jpg");
+  myImage3.resize(width,height);
   
-  
-  image(myImage,0,0);
-  
-  mask = new PImage();  
+  frameRate(30);
 }
 
 void draw() 
 {
   
   pg.beginDraw();
-  
-  //mask = myImage3.get(mouseX,0, (int)userRange,height);
-  
- // pg.image(mask, mouseX,0);
   
   UpdateRects();
   
@@ -58,41 +50,38 @@ void draw()
 }
 
 public void UpdateRects()
-{  
+{ 
   color mycolor;
-  
-  /*int nregions = 3;
-  for(int r=0; r<nregions; r++)
-  {
-     
-  }*/
-  
-  PImage picImage = myImage;
-  
-  /*if(!CanDrawRect()){
-    picImage = myImage3;
-  }*/
-  
+    
   for(int i =0; i< nrects; i++)
   {
-    x = random(0, picImage.width);
-    y = random(0, picImage.height);
+    x = random(0, myImage.width);
+    y = random(0, myImage.height);
     pg.noStroke();
     
     float randomColor = random(-1,1);
-    
-    mycolor = picImage.get((int)x, (int)y);
+    float rectWidth = random(10,5);
     
     if(randomColor < 0)
     {
-      mycolor = myImage2.get((int)x+(int)random(-1.1,1.1), (int)y);
+      if(!CanDrawRect())
+      {
+        mycolor = myImage3.get((int)x+(int)random(-1.1,1.1), (int)y);
+        rectWidth = random(30,10);
+      }
+      else 
+      {
+        mycolor = myImage2.get((int)x+(int)random(-1.1,1.1), (int)y);
+      }
+    } 
+    else 
+    {
+      mycolor = myImage.get((int)x, (int)y);
     }
-     
-     
-    /*if(!CanDrawRect()){*///
-      pg.fill(mycolor,random(20,90));
-      pg.rect(x,y, rectWidthFactor*random(15,5),random(60,20));
-    //}     
+    
+    pg.fill(mycolor,random(20,90));
+      
+    pg.rect(x,y, rectWidthFactor*random(rectWidth,5),random(60,20));
   }
 }
 
@@ -110,7 +99,7 @@ void controllerChange(int channel, int number, int value) {
       println("userFactor = " + userFactor);
     break;
     case 74:
-      rectWidthFactor = map(value, 0, 127, 0, 1);
+      rectWidthFactor = map(value, 0, 250, 0, 1);
       println("rectWidthFactor = " + rectWidthFactor);
     break;
   }
