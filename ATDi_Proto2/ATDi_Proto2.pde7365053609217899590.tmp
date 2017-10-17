@@ -5,7 +5,6 @@ MidiBus myBus; // The MidiBus
 float a = 0;
 PImage myImage, myImage2, myImage3, myImage4;
 PGraphics pg;
-PGraphics pg2;
 
 float x,y;
 
@@ -26,7 +25,6 @@ void setup()
   
   size(1920, 1080);
   pg = createGraphics(width, height);
-  pg2 = createGraphics(width, height);
   
   myImage = loadImage("IMG_3237.jpg").get(0,0, 1500,1080);
   myImage.resize(width,height);
@@ -62,14 +60,13 @@ public void UpdateRects()
     x = random(0, myImage.width);
     y = random(0, myImage.height);
     pg.noStroke();
-    pg2.noStroke();
     
     float randomColor = random(-1,1);
     float rectWidth = random(10,5);
     
     if(randomColor < 0)
     {
-      if(!CanDrawRect() || CanDrawRect2())
+      if(!CanDrawRect())
       {
         mycolor = myImage3.get((int)x+(int)random(-1.1,1.1), (int)y);
         rectWidth = random(30,10);
@@ -91,15 +88,9 @@ public void UpdateRects()
 }
 
 public boolean CanDrawRect(){
-  return !(abs(x - treePosX) < userRange);
-}
-
-public boolean CanDrawRect2(){
-  return !(abs(x - width) > userRange);
-}
-
-public boolean CanDrawRect3(){
-  return !(abs(x - mouseX) > userRange);
+  boolean isMinimum = !(abs(x - treePosX) < userRange);
+  boolean isMaximum = !(abs(x - width) < userRange);
+  return isMinimum || isMaximum;
 }
 
 //  MIDI stuff
@@ -114,11 +105,11 @@ void controllerChange(int channel, int number, int value) {
       println("userFactor = " + userFactor);
     break;
     case 74:
-      rectWidthFactor = map(value, 0, 127, 0.2, 1);
+      rectWidthFactor = map(value, 0, 250, 0, 1);
       println("rectWidthFactor = " + rectWidthFactor);
     break;
-    case 58:
-      treePosX = map(value, 0, 127, 0, width);
+    case 19:
+      treePosX = map(value, 0, width, 0, 1);
       println("rectWidthFactor = " + rectWidthFactor);
     break;
   }
