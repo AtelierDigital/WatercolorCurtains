@@ -72,7 +72,11 @@ void draw()
     
   if(leapMotion.getHands ().size() > 0){
     for (Hand hand : leapMotion.getHands ()) {
-        
+      float ratio = map(hand.getPalmPosition().y, -300 , 800, 0.2, 1.2);  
+      userRange = 70 * (ratio * ratio);
+      rectHeightFactor = (ratio /ratio / ratio);
+      rectWidthFactor = map(ratio, 0.2 , 1.2, 0.5, 0.7);  
+      
       PickColor(hand, myColor);
       println("HAND"+count+" :"+hand.getPalmPosition().x);
       count++;
@@ -110,7 +114,7 @@ public void PickColor(Hand hand,color out)
       if(OnHandPosition(hand) && hand != null)
       {
           out = myImage3.get((int)x+(int)random(-1.1,1.1), (int)y);
-          rectWidth = random(20,10);
+         // rectWidth = random(7,3);
       }else{
           out = myImage2.get((int)x+(int)random(-1.1,1.1), (int)y);
       }
@@ -122,7 +126,7 @@ public void PickColor(Hand hand,color out)
     }
     
     pg.fill(out,random(20,90));
-    pg.rect(x,y, rectWidthFactor*random(rectWidth,5),rectHeightFactor*random(100,30));
+    pg.rect(x,y, rectWidthFactor* rectWidth,rectHeightFactor*random(100,30));
     
   }
 
