@@ -1,4 +1,6 @@
 import themidibus.*;
+import processing.sound.*;
+import de.voidplus.leapmotion.*;
 
 MidiBus myBus; // The MidiBus
 
@@ -16,7 +18,6 @@ float rectHeightFactor = 0.5;
 
 float userFactor = 1;
 
-
 float userRange = 50;
 float userRange2 = 50;
 
@@ -25,10 +26,18 @@ float treePosX2;
 
 PImage mask;
 
+SoundFile windSound;
+SoundFile jungleMorning;
+
+LeapMotion leapMotion;
+
 void setup() 
 {
   //  MIDI stuff
   myBus = new MidiBus(this, "Arturia MINILAB", -1);
+  
+  windSound = new SoundFile(this, "/Sounds/WindBlows.mp3");
+  jungleMorning = new SoundFile(this, "/Sounds/JungleMorning.mp3");
   
   size(1920, 1080);
   pg = createGraphics(width, height);
@@ -45,7 +54,12 @@ void setup()
   
   treePosX2 = width;
   
+  windSound.play(0.5, 0.3);  
+  jungleMorning.play(0.8,1.0);
+  
   frameRate(30);
+  
+  leapMotion = new LeapMotion(this);
 }
 
 void draw() 
@@ -53,7 +67,22 @@ void draw()
   
   pg.beginDraw();
   
-  UpdateRects();
+  int count = 0;
+      color myColor = 0;
+    
+  if(leapMotion.getHands ().size() > 0){
+    for (Hand hand : leapMotion.getHands ()) {
+        
+      PickColor(hand, myColor);
+      println("HAND"+count+" :"+hand.getPalmPosition().x);
+      count++;
+    }
+  } 
+  else
+  {
+    PickColor(null,myColor); 
+  }
+  
   
   pg.endDraw();
   
@@ -61,41 +90,71 @@ void draw()
    
 }
 
-public void UpdateRects()
+
+public void PickColor(Hand hand,color out)
 { 
-  color mycolor;
-    
   for(int i =0; i< nrects; i++)
   {
+    
     x = random(0, myImage.width);
     y = random(0, myImage.height);
     pg.noStroke();
     pg2.noStroke();
-    
+        
     float randomColor = random(-1,1);
     float rectWidth = random(10,5);
     
     if(randomColor < 0)
-    {
-      if(!CanDrawRect() || !CanDrawRect2())
+    { 
+      
+      if(OnHandPosition(hand) && hand != null)
       {
-        mycolor = myImage3.get((int)x+(int)random(-1.1,1.1), (int)y);
-        rectWidth = random(20,10);
+          out = myImage3.get((int)x+(int)random(-1.1,1.1), (int)y);
+          rectWidth = random(20,10);
+      }else{
+          out = myImage2.get((int)x+(int)random(-1.1,1.1), (int)y);
       }
-      else 
-      {
-        mycolor = myImage2.get((int)x+(int)random(-1.1,1.1), (int)y);
-      }
+      
     } 
     else 
     {
-      mycolor = myImage.get((int)x, (int)y);
+      out = myImage.get((int)x, (int)y);
     }
     
-    pg.fill(mycolor,random(20,90));
-      
+    pg.fill(out,random(20,90));
     pg.rect(x,y, rectWidthFactor*random(rectWidth,5),rectHeightFactor*random(100,30));
+    
   }
+
+}
+
+void leapOnInit() {
+  
+   println("Leap Motion Init");
+}
+
+void leapOnConnect() {
+  
+   println("Leap Motion Connect");
+}
+
+void leapOnFrame() {
+  
+}
+
+void leapOnDisconnect() {
+  
+}
+
+void leapOnExit() {
+  
+   println("Leap Motion Exit");
+}
+
+public boolean OnHandPosition(Hand leapHand){
+  if(leapHand == null) return false;
+  
+  return (abs(x - leapHand.getPalmPosition().x) < userRange);
 }
 
 public boolean CanDrawRect(){
