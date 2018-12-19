@@ -1,14 +1,17 @@
-import themidibus.*;
-import processing.sound.*;
+//import processing.sound.*;
 import de.voidplus.leapmotion.*;
-
-MidiBus myBus; // The MidiBus
+import ddf.minim.*;
+ 
+Minim minim;
+AudioPlayer windSound;
+AudioPlayer jungleMorning;
+AudioPlayer fireSound;
 
 float a = 0;
 PImage myImage, myImage2, myImage3, myImage4;
 PGraphics pg;
 PGraphics pg2;
-
+//
 float x,y;
 
 int nrects = 150;
@@ -18,7 +21,7 @@ float rectHeightFactor = 0.5;
 
 float userFactor = 1;
 
-float userRange = 50;
+float userRange = 50;    
 float userRange2 = 50;
 
 float treePosX = 0;
@@ -26,18 +29,33 @@ float treePosX2;
 
 PImage mask;
 
-SoundFile windSound;
-SoundFile jungleMorning;
+//SoundFile windSound;
+//SoundFile jungleMorning;
 
 LeapMotion leapMotion;
 
+float volume;
+//  Tudo isto porque parece que as transicoes da Minim nao conseguem se sobrepor...
+boolean transitionedHandsON;
+int transitionHandsON_msecs = 500;
+int transitionHandsON_msecs_TIMER;
+
+int currTime, prevTime;  // milliseconds
+
 void setup() 
 {
-  //  MIDI stuff
-  myBus = new MidiBus(this, "Arturia MINILAB", -1);
+  minim = new Minim(this);
+  windSound = minim.loadFile("Sounds/WindBlows.mp3", 512);
+  //windSound.loop();
   
-  windSound = new SoundFile(this, "/Sounds/WindBlows.mp3");
-  jungleMorning = new SoundFile(this, "/Sounds/JungleMorning.mp3");
+  jungleMorning = minim.loadFile("Sounds/JungleMorning.mp3", 512);
+  //jungleMorning.loop();
+  
+  fireSound = minim.loadFile("Sounds/17548__dynamicell__fire-forest-inferno_LOOP.mp3",512);
+  fireSound.setGain(-30.0f);
+  fireSound.loop();
+  //windSound = new SoundFile(this, "/Sounds/WindBows.mp3");
+  //jungleMorning = new SoundFile(this, "/Sounds/JungleMorning.mp3");
   
   size(1920, 1080);
   pg = createGraphics(width, height);
@@ -54,46 +72,81 @@ void setup()
   
   treePosX2 = width;
   
-  windSound.play(0.5, 0.3);  
-  jungleMorning.play(0.8,1.0);
+  //windSound.play(0.5, 0.3);  
+  //jungleMorning.play(0.8,1.0);
   
   frameRate(30);
   
   leapMotion = new LeapMotion(this);
+  
+  transitionedHandsON = false;
+  transitionHandsON_msecs_TIMER = transitionHandsON_msecs;
+  
+  noCursor();
 }
 
 void draw() 
-{
+{ 
+  currTime = millis();
   
   pg.beginDraw();
   
   int count = 0;
-      color myColor = 0;
+  color myColor = 0;
     
   if(leapMotion.getHands ().size() > 0){
     for (Hand hand : leapMotion.getHands ()) {
       float ratio = map(hand.getPalmPosition().y, -300 , 800, 0.2, 1.2);  
-      userRange = 70 * (ratio * ratio);
-      rectHeightFactor = (ratio /ratio / ratio);
+      userRange = 20 + 170 * (ratio * ratio);
+      rectHeightFactor = (ratio /ratio / ratio / ratio);
       rectWidthFactor = map(ratio, 0.2 , 1.2, 0.5, 0.7);  
       
       PickColor(hand, myColor);
-      println("HAND"+count+" :"+hand.getPalmPosition().x);
+      //println("HAND"+count+" :"+hand.getPalmPosition().x);
+      
+      if(!transitionedHandsON)
+      {
+        if(transitionHandsON_msecs_TIMER == transitionHandsON_msecs) // inicia rampa
+        {
+          volume = 10+ (-30 * (1.2 - ratio));
+          fireSound.shiftGain(fireSound.getGain(), volume, transitionHandsON_msecs);
+          transitionHandsON_msecs_TIMER -= (currTime - prevTime);
+          println("-- ramp --");
+        }
+        else // finalizamos a rampa
+        {
+          transitionHandsON_msecs_TIMER -= (currTime - prevTime);
+          if(transitionHandsON_msecs_TIMER <= 0) {
+            transitionedHandsON = true;
+            transitionHandsON_msecs_TIMER = transitionHandsON_msecs;
+          }
+        }
+      }
+      else // nao estamos mais na rampa
+      {
+        volume = 10+ (-30 * (1.2 - ratio));
+        //println(volume);
+        fireSound.setGain(volume);
+      }
       count++;
     }
+    
   } 
   else
   {
-    PickColor(null,myColor); 
-  }
-  
+    fireSound.shiftGain(fireSound.getGain(), -30.0f, 1000);
+    transitionedHandsON = false; // pronto para a proxima rampa 
+      
+    PickColor(null,myColor);
+  }      
   
   pg.endDraw();
   
   image(pg,0,0);
    
+   
+  prevTime = currTime;
 }
-
 
 public void PickColor(Hand hand,color out)
 { 
@@ -103,10 +156,10 @@ public void PickColor(Hand hand,color out)
     x = random(0, myImage.width);
     y = random(0, myImage.height);
     pg.noStroke();
-    pg2.noStroke();
+      pg2.noStroke();
         
     float randomColor = random(-1,1);
-    float rectWidth = random(10,5);
+    float rectWidth = random(15,10);
     
     if(randomColor < 0)
     { 
@@ -114,7 +167,7 @@ public void PickColor(Hand hand,color out)
       if(OnHandPosition(hand) && hand != null)
       {
           out = myImage3.get((int)x+(int)random(-1.1,1.1), (int)y);
-         // rectWidth = random(7,3);
+          rectWidth = random(20,15);
       }else{
           out = myImage2.get((int)x+(int)random(-1.1,1.1), (int)y);
       }
@@ -173,50 +226,13 @@ public boolean CanDrawRect3(){
   return !(abs(x - mouseX) > userRange);
 }
 
-//  MIDI stuff
-void controllerChange(int channel, int number, int value) {
-  
-  println("userFactor = " + number);
-  // Receive a controllerChange
-  switch(number)
-  {
-    case 74:
-      treePosX = map(value, 0, 127, 0, width/2);
-      println("rectWidthFactor = " + rectWidthFactor);
-    break;
-    case 71:
-      userRange = map(value, 0, 127, 0, width / 2);
-    break;
-    case 76:
-      treePosX2 = map(127 - value, 0, 127, width/2, width);
-    break;
-     case 77:
-      userRange2 = map(value, 0, 127, 0, width / 2);
-    break;
-    case 7:
-      rectWidthFactor = map(value, 0, 127, 0.2, 1);
-    break;
-    case 114:
-      rectHeightFactor = map(value, 0, 127, 0.2, 1);
-    break;
-    
-    
-  }
-  println("Controller Change (channel, number, value):" + channel + " " + number + " " + value);
-  /*println();
-  println("Controller Change:");
-  println("--------");
-  println("Channel:"+channel);
-  println("Number:"+number);
-  println("Value:"+value);*/
-}
 
 float controlUserRange = 0;
 float controlTreePosX = 0;
 
 float controlWidthFactor = 0;
 
-void keyPressed() {
+/*void keyPressed() {
   switch(keyCode)
   {
     case UP:
@@ -244,4 +260,4 @@ void keyPressed() {
       rectWidthFactor = map(controlWidthFactor, 1, 127, 0.2, 1);
     break;
   }
-}
+}*/
